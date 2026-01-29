@@ -1,0 +1,21 @@
+# --- .NET Build Artifacts ---
+[Bb]in/
+[Oo]bj/
+*.exe
+*.dll
+*.pdb
+
+# --- Visual Studio & VS Code ---
+.vs/
+.vscode/
+*.user
+*.suo
+*.sln.docstates
+
+# --- Secrets & Environment ---
+# It's a good habit to ignore specific dev settings if they have passwords
+appsettings.Development.json
+
+# --- OS Specific ---
+.DS_Store
+Thumbs.db
