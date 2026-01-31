@@ -1,4 +1,5 @@
 using Dapper;
+using Microsoft.Extensions.Configuration;
 using Npgsql;
 using StackExchange.Redis;
 using System.Text.Json;
@@ -10,11 +11,12 @@ namespace Monitor.Worker;
 public class Worker : BackgroundService
 {
     private readonly ILogger<Worker> _logger;
-    private readonly string _connectionString = "Host=localhost;Port=5433;Database=postgres;Username=saas_admin;Password=SaaS_Password_99";
+    private readonly IConfiguration _configuration;
 
-    public Worker(ILogger<Worker> logger)
+    public Worker(ILogger<Worker> logger, IConfiguration configuration)
     {
         _logger = logger;
+        _configuration = configuration;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -28,7 +30,8 @@ public class Worker : BackgroundService
         {
             try
             {
-                using var masterConn = new NpgsqlConnection(_connectionString);
+                var connectionString = _configuration.GetConnectionString("DefaultConnection");
+                using var masterConn = new NpgsqlConnection(connectionString);
                 await masterConn.OpenAsync(stoppingToken);
 
                 // 2. FETCH user_id from the master table
