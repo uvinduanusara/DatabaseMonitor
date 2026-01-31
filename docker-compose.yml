@@ -1,0 +1,10 @@
+services:
+  api:
+    image: monitor-api
+    ports:
+      - "5005:8080"
+    restart: always
+
+  worker:
+    image: monitor-worker
+    restart: always
