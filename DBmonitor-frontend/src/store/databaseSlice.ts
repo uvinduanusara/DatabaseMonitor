@@ -28,7 +28,7 @@ export const fetchDatabases = createAsyncThunk<Database[]>(
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.get<Database[]>(
-        "http://localhost:5037/api/databases",
+        "/api/databases",
       );
       return response.data;
     } catch (error) {

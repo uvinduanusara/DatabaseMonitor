@@ -6,6 +6,10 @@ using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.Extensions.Caching.Distributed;
 using System.Security.Claims;
 using System.Text.Json;
+using DotNetEnv;
+
+// Load .env file
+Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,7 +18,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Redis Caching
 builder.Services.AddStackExchangeRedisCache(options =>
 {
-    options.Configuration = "localhost:6379";
+    options.Configuration = Environment.GetEnvironmentVariable("REDIS_CONNECTION") ?? "localhost:6379";
     options.InstanceName = "SaaS_Monitor_";
 });
 
@@ -31,9 +35,8 @@ builder.Services.AddAuthentication(options =>
 })
 .AddGoogle(options =>
 {
-    // These should be in your appsettings.json or User Secrets
-    options.ClientId = builder.Configuration["Authentication:Google:ClientId"] ?? "YOUR_CLIENT_ID";
-    options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"] ?? "YOUR_CLIENT_SECRET";
+    options.ClientId = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID") ?? "YOUR_CLIENT_ID";
+    options.ClientSecret = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET") ?? "YOUR_CLIENT_SECRET";
 });
 
 builder.Services.AddAuthorization();
@@ -45,13 +48,13 @@ var app = builder.Build();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseCors(policy => policy
-    .WithOrigins("http://localhost:5173")
+    .WithOrigins(Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:5173")
     .AllowAnyMethod()
     .AllowAnyHeader()
     .AllowCredentials());
 
 // Database Connection String
-string connString = "Host=localhost;Port=5433;Database=postgres;Username=saas_admin;Password=SaaS_Password_99";
+string connString = Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING") ?? "Host=localhost;Port=5433;Database=postgres;Username=saas_admin;Password=SaaS_Password_99";
 
 // --- 3. AUTHENTICATION ENDPOINTS ---
 
@@ -79,7 +82,7 @@ app.MapGet("/api/auth/me", (ClaimsPrincipal user) =>
 app.MapGet("/api/auth/logout", async (HttpContext context) =>
 {
     await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-    return Results.Redirect("http://localhost:5173");
+    return Results.Redirect(Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:5173");
 });
 
 // OAuth Callback & Auto-Registration
@@ -96,7 +99,7 @@ app.MapGet("/api/auth/callback", async (HttpContext context) =>
     var sql = "INSERT INTO users (email, google_id) VALUES (@Email, @GId) ON CONFLICT (email) DO NOTHING";
     await conn.ExecuteAsync(sql, new { Email = email, GId = googleId });
 
-    return Results.Redirect("http://localhost:5173");
+    return Results.Redirect(Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:5173");
 });
 
 // --- 4. DATA ENDPOINTS (PROTECTED) ---

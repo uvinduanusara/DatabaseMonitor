@@ -12,7 +12,7 @@ const initialState: AuthState = {
 };
 
 export const fetchUser = createAsyncThunk<User>("auth/fetchUser", async () => {
-  const response = await axios.get<User>("http://localhost:5037/api/auth/me");
+  const response = await axios.get<User>("/api/auth/me");
   return response.data;
 });
 

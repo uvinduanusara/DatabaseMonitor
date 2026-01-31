@@ -86,7 +86,7 @@ export function AddDatabaseModal({ onSuccess }: AddDatabaseModalProps) {
 
     try {
       await axios.post(
-        "http://localhost:5037/api/databases",
+        "/api/databases",
         {
           name,
           dbType,

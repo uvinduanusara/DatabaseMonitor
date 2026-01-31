@@ -20,7 +20,7 @@ export const fetchMetrics = createAsyncThunk<Metric[]>(
   "metrics/fetchAll",
   async () => {
     const response = await axios.get<Metric[]>(
-      "http://localhost:5037/api/metrics",
+      "/api/metrics",
     );
     return response.data;
   },

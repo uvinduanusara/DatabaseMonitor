@@ -131,8 +131,7 @@ public class Worker : BackgroundService
                 : Guid.Empty
                         });
 
-                        _logger.LogInformation("Polled {name} ({type}): CPU={cpu}%, Memory={memory}MB",
-                            (string)target.name, type, cpu.ToString("F2"), memory.ToString("F2"));
+
                     }
                     catch (Exception ex)
                     {

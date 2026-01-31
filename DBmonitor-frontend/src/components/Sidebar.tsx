@@ -74,7 +74,7 @@ export function Sidebar() {
             <div className="flex-1 overflow-hidden">
               <p className="text-xs font-medium truncate">{user.name}</p>
               <a
-                href="http://localhost:5037/api/auth/logout"
+                href={`${import.meta.env.VITE_API_BASE_URL}/api/auth/logout`}
                 className="text-[10px] text-slate-500 hover:text-red-400 flex items-center gap-1 mt-0.5"
               >
                 <LogOut size={10} /> Logout
