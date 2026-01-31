@@ -1,4 +1,4 @@
-import { useAppDispatch, useAppSelector } from "../hooks/store";
+import { useAppDispatch } from "../hooks/store";
 import { fetchDatabases } from "../store/databaseSlice";
 import { fetchMetrics } from "../store/metricsSlice";
 import { Sidebar } from "../components/Sidebar";
@@ -9,8 +9,8 @@ export function Dashboard() {
   const dispatch = useAppDispatch();
 
   const handleRefresh = () => {
-    dispatch(fetchDatabases() as any);
-    dispatch(fetchMetrics() as any);
+    dispatch(fetchDatabases());
+    dispatch(fetchMetrics());
   };
 
   return (
