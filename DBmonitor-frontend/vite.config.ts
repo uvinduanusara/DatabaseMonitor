@@ -18,7 +18,21 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
-      // Your .NET API
     },
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          // If the file is in node_modules, put it in the 'vendor' chunk
+          if (id.includes("node_modules")) {
+            return "vendor";
+          }
+        },
+      },
+    },
+    // Since we are grouping all vendors, the chunk will be > 500kB.
+    // We increase the limit to 1500kB to stop the warning.
+    chunkSizeWarningLimit: 1500,
   },
 });
