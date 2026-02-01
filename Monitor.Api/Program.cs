@@ -4,9 +4,8 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.AspNetCore.HttpOverrides; // Added for Proxy support
+using Microsoft.AspNetCore.HttpOverrides;
 using System.Security.Claims;
-using System.Text.Json;
 using DotNetEnv;
 
 // Load .env file
@@ -16,7 +15,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 // --- 1. SERVICES CONFIGURATION ---
 
-// Forwarded Headers Configuration (FIXES REDIRECT LOOP)
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
@@ -24,14 +22,12 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
-// Redis Caching
 builder.Services.AddStackExchangeRedisCache(options =>
 {
     options.Configuration = Environment.GetEnvironmentVariable("REDIS_CONNECTION") ?? "localhost:6379";
     options.InstanceName = "SaaS_Monitor_";
 });
 
-// Google OAuth2 & Cookie Authentication
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -41,8 +37,8 @@ builder.Services.AddAuthentication(options =>
 {
     options.Cookie.Name = "SaaS_Auth";
     options.Cookie.Path = "/";
-    options.Cookie.SameSite = SameSiteMode.None; // Required for Vercel -> VPS communication
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Required for HTTPS
+    options.Cookie.SameSite = SameSiteMode.None; 
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always; 
     options.Events.OnRedirectToLogin = context =>
     {
         context.Response.StatusCode = StatusCodes.Status401Unauthorized;
@@ -61,28 +57,76 @@ builder.Services.AddCors();
 
 var app = builder.Build();
 
-// --- 2. MIDDLEWARE ---
+// --- 2. DATABASE AUTO-MIGRATION WITH RETRY LOOP ---
+// This runs BEFORE app.Run() to ensure tables exist before requests come in.
+string connString = Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING") ?? "";
 
-// --- 2. MIDDLEWARE ---
+using (var scope = app.Services.CreateScope())
+{
+    var setupSql = @"
+        CREATE TABLE IF NOT EXISTS users (
+            google_id TEXT PRIMARY KEY,
+            email TEXT UNIQUE NOT NULL,
+            name TEXT,
+            picture TEXT,
+            tenant_id TEXT
+        );
 
-// 1. MUST BE FIRST: Fixes the HTTPS scheme from Caddy
+        CREATE TABLE IF NOT EXISTS monitored_databases (
+            id SERIAL PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            connection_string TEXT NOT NULL,
+            db_type TEXT NOT NULL,
+            host TEXT DEFAULT '',
+            is_active BOOLEAN DEFAULT TRUE,
+            tenant_id TEXT,
+            UNIQUE(name, user_id)
+        );
+
+        CREATE TABLE IF NOT EXISTS database_metrics (
+            db_id INTEGER REFERENCES monitored_databases(id) ON DELETE CASCADE,
+            time TIMESTAMPTZ NOT NULL,
+            cpu DOUBLE PRECISION,
+            memory DOUBLE PRECISION,
+            storage_usage DOUBLE PRECISION,
+            tenant_id TEXT,
+            UNIQUE(db_id, time)
+        );";
+
+    for (int i = 1; i <= 5; i++)
+    {
+        try
+        {
+            Console.WriteLine($"🔍 Database Migration Attempt {i}...");
+            using var conn = new NpgsqlConnection(connString);
+            await conn.ExecuteAsync(setupSql);
+            Console.WriteLine("✅ Database Schema Verified/Created.");
+            break; 
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"⚠️ Attempt {i} failed: {ex.Message}");
+            if (i == 5) Console.WriteLine("❌ Final Migration Attempt Failed. App may crash on data requests.");
+            else await Task.Delay(5000); // Wait 5 seconds for Postgres to wake up
+        }
+    }
+}
+
+// --- 3. MIDDLEWARE ---
+
 app.UseForwardedHeaders();
 
-// 2. MUST BE SECOND: Add CORS headers to EVERY request (even unauthenticated ones)
 app.UseCors(policy => policy
     .WithOrigins(Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:5173")
     .AllowAnyMethod()
     .AllowAnyHeader()
     .AllowCredentials());
 
-// 3. Now check if the user is logged in
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Database Connection String
-string connString = Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING") ?? "";
-
-// --- 3. AUTHENTICATION ENDPOINTS ---
+// --- 4. AUTHENTICATION ENDPOINTS ---
 
 app.MapGet("/api/auth/google-login", () =>
 {
@@ -128,14 +172,13 @@ app.MapGet("/api/auth/callback", async (HttpContext context) =>
     return Results.Redirect(Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:5173");
 });
 
-// --- 4. DATA ENDPOINTS (PROTECTED) ---
+// --- 5. DATA ENDPOINTS (PROTECTED) ---
 
 app.MapGet("/api/metrics", async (ClaimsPrincipal user) =>
 {
     var googleId = user.FindFirstValue(ClaimTypes.NameIdentifier);
     using var conn = new NpgsqlConnection(connString);
 
-    // CHANGED: time_bucket -> date_trunc
     var sql = @"
         SELECT 
             m.db_id,
@@ -195,51 +238,5 @@ app.MapDelete("/api/databases/{id}", async (int id, ClaimsPrincipal user) =>
 }).RequireAuthorization();
 
 app.Run();
-
-// --- 5. AUTO-MIGRATION (CLEAN SLATE PROTECTION) ---
-using (var scope = app.Services.CreateScope())
-{
-    try
-    {
-        using var conn = new NpgsqlConnection(connString);
-        var setupSql = @"
-            CREATE TABLE IF NOT EXISTS users (
-                google_id TEXT PRIMARY KEY,
-                email TEXT UNIQUE NOT NULL,
-                name TEXT,
-                picture TEXT,
-                tenant_id TEXT
-            );
-
-            CREATE TABLE IF NOT EXISTS monitored_databases (
-                id SERIAL PRIMARY KEY,
-                user_id TEXT NOT NULL,
-                name TEXT NOT NULL,
-                connection_string TEXT NOT NULL,
-                db_type TEXT NOT NULL,
-                host TEXT DEFAULT '',
-                is_active BOOLEAN DEFAULT TRUE,
-                tenant_id TEXT,
-                UNIQUE(name, user_id)
-            );
-
-            CREATE TABLE IF NOT EXISTS database_metrics (
-                db_id INTEGER REFERENCES monitored_databases(id) ON DELETE CASCADE,
-                time TIMESTAMPTZ NOT NULL,
-                cpu DOUBLE PRECISION,
-                memory DOUBLE PRECISION,
-                storage_usage DOUBLE PRECISION,
-                tenant_id TEXT,
-                UNIQUE(db_id, time)
-            );";
-
-        await conn.ExecuteAsync(setupSql);
-        Console.WriteLine("✅ Database Schema Verified/Created.");
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"❌ Database Migration Failed: {ex.Message}");
-    }
-}
 
 public record DatabaseDto(string Name, string DbType, string ConnStr);
