@@ -40,6 +40,7 @@ builder.Services.AddAuthentication(options =>
 .AddCookie(options =>
 {
     options.Cookie.Name = "SaaS_Auth";
+    options.Cookie.Path = "/";
     options.Cookie.SameSite = SameSiteMode.None; // Required for Vercel -> VPS communication
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Required for HTTPS
     options.Events.OnRedirectToLogin = context =>
