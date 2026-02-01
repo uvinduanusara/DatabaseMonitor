@@ -196,4 +196,50 @@ app.MapDelete("/api/databases/{id}", async (int id, ClaimsPrincipal user) =>
 
 app.Run();
 
+// --- 5. AUTO-MIGRATION (CLEAN SLATE PROTECTION) ---
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        using var conn = new NpgsqlConnection(connString);
+        var setupSql = @"
+            CREATE TABLE IF NOT EXISTS users (
+                google_id TEXT PRIMARY KEY,
+                email TEXT UNIQUE NOT NULL,
+                name TEXT,
+                picture TEXT,
+                tenant_id TEXT
+            );
+
+            CREATE TABLE IF NOT EXISTS monitored_databases (
+                id SERIAL PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                connection_string TEXT NOT NULL,
+                db_type TEXT NOT NULL,
+                host TEXT DEFAULT '',
+                is_active BOOLEAN DEFAULT TRUE,
+                tenant_id TEXT,
+                UNIQUE(name, user_id)
+            );
+
+            CREATE TABLE IF NOT EXISTS database_metrics (
+                db_id INTEGER REFERENCES monitored_databases(id) ON DELETE CASCADE,
+                time TIMESTAMPTZ NOT NULL,
+                cpu DOUBLE PRECISION,
+                memory DOUBLE PRECISION,
+                storage_usage DOUBLE PRECISION,
+                tenant_id TEXT,
+                UNIQUE(db_id, time)
+            );";
+
+        await conn.ExecuteAsync(setupSql);
+        Console.WriteLine("✅ Database Schema Verified/Created.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ Database Migration Failed: {ex.Message}");
+    }
+}
+
 public record DatabaseDto(string Name, string DbType, string ConnStr);
