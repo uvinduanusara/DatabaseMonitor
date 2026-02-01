@@ -1,0 +1,3 @@
+dbmonitor.uvindu.xyz {
+    reverse_proxy api:8080
+}
