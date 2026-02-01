@@ -3,7 +3,7 @@ import {
   createAsyncThunk,
   type PayloadAction,
 } from "@reduxjs/toolkit";
-import axios from "../lib/axiosConfig";
+import api from "../lib/axiosConfig";
 import { type Metric } from "../types";
 
 interface MetricsState {
@@ -19,7 +19,7 @@ const initialState: MetricsState = {
 export const fetchMetrics = createAsyncThunk<Metric[]>(
   "metrics/fetchAll",
   async () => {
-    const response = await axios.get<Metric[]>(
+    const response = await api.get<Metric[]>(
       "/api/metrics",
     );
     return response.data;

@@ -3,7 +3,7 @@ import {
   createAsyncThunk,
   type PayloadAction,
 } from "@reduxjs/toolkit";
-import axios from "../lib/axiosConfig";
+import api from "../lib/axiosConfig";
 
 export interface Database {
   id: number;
@@ -27,7 +27,7 @@ export const fetchDatabases = createAsyncThunk<Database[]>(
   "databases/fetchAll",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get<Database[]>(
+      const response = await api.get<Database[]>(
         "/api/databases",
       );
       return response.data;
