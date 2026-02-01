@@ -12,11 +12,18 @@ public class Worker : BackgroundService
 {
     private readonly ILogger<Worker> _logger;
     private readonly IConfiguration _configuration;
+    private readonly string _connectionString;
 
     public Worker(ILogger<Worker> logger, IConfiguration configuration)
     {
         _logger = logger;
         _configuration = configuration;
+
+        // Try Environment Variable first, then fallback to a local string for dev
+        _connectionString = configuration["DATABASE_CONNECTION_STRING"]
+                            ?? "Host=localhost;Port=5433;Database=postgres;Username=saas_admin;Password=SaaS_Password_99";
+
+        _logger.LogInformation("Worker initialized with connection string: {conn}", _connectionString.Substring(0, 15) + "...");
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -30,10 +37,9 @@ public class Worker : BackgroundService
         {
             try
             {
-                var connectionString = _configuration.GetConnectionString("DefaultConnection");
-                using var masterConn = new NpgsqlConnection(connectionString);
+                // Use the string we already validated in the constructor
+                using var masterConn = new NpgsqlConnection(_connectionString);
                 await masterConn.OpenAsync(stoppingToken);
-
                 // 2. FETCH user_id from the master table
                 var targets = await masterConn.QueryAsync<dynamic>(
                     "SELECT id, name, connection_string, db_type, user_id FROM monitored_databases WHERE is_active = true AND connection_string IS NOT NULL");

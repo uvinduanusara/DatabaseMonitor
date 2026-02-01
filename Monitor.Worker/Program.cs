@@ -3,6 +3,8 @@ using Monitor.Worker;
 
 var builder = Host.CreateApplicationBuilder(args);
 
+builder.Configuration.AddEnvironmentVariables();
+
 // Load environment variables from .env file if it exists
 LoadEnvFile(builder.Configuration);
 
