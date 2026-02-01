@@ -49,6 +49,7 @@ services:
       - REDIS_CONNECTION=redis-cache:6379
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - FRONTEND_URL=${FRONTEND_URL}
     depends_on:
       - postgres-db
       - redis-cache
