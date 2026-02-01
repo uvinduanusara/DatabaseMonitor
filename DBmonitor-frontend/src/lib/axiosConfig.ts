@@ -1,9 +1,8 @@
-// lib/axiosConfig.ts
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:5002",
-  withCredentials: true,
+  baseURL: import.meta.env.VITE_API_BASE_URL || "https://dbmonitor.uvindu.xyz",
+  withCredentials: true, // This allows the cookie to be sent
 });
 
-export default api;
+export default api; // Export THIS specific instance
