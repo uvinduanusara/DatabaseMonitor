@@ -25,9 +25,7 @@ export function Databases() {
 
     setDeleting(id);
     try {
-      await axios.delete(`/api/databases/${id}`, {
-        withCredentials: true,
-      });
+      await axios.delete(`/api/databases/${id}`);
       // Optionally refresh the list
       window.location.reload();
     } catch (error) {

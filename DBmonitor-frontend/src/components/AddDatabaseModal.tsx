@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import axios from "../lib/axiosConfig";
 import { Plus } from "lucide-react";
 import {
   Dialog,
@@ -91,9 +91,6 @@ export function AddDatabaseModal({ onSuccess }: AddDatabaseModalProps) {
           name,
           dbType,
           connStr,
-        },
-        {
-          withCredentials: true,
         },
       );
 
