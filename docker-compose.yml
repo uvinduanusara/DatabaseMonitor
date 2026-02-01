@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   # The Database - Everything depends on this
@@ -20,6 +20,20 @@ services:
     image: redis:7-alpine
     container_name: redis-cache
     restart: always
+
+  caddy:
+    image: caddy:latest
+    container_name: caddy-service
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
 
   # The API - Your C# Backend
   api:
@@ -53,3 +67,5 @@ services:
 
 volumes:
   postgres_data:
+  caddy_data:
+  caddy_config:
