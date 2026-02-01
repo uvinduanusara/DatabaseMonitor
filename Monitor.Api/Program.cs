@@ -130,22 +130,23 @@ app.MapGet("/api/auth/callback", async (HttpContext context) =>
 
 // --- 4. DATA ENDPOINTS (PROTECTED) ---
 
-app.MapGet("/api/metrics", async (IDistributedCache cache, ClaimsPrincipal user) =>
+app.MapGet("/api/metrics", async (ClaimsPrincipal user) =>
 {
     var googleId = user.FindFirstValue(ClaimTypes.NameIdentifier);
     using var conn = new NpgsqlConnection(connString);
 
+    // CHANGED: time_bucket -> date_trunc
     var sql = @"
         SELECT 
             m.db_id,
             d.name,
-            time_bucket('1 minute', m.time) AS time, 
+            date_trunc('minute', m.time) AS time, 
             avg(m.cpu) as cpu, 
             avg(m.memory) as memory
         FROM database_metrics m 
         JOIN monitored_databases d ON m.db_id = d.id 
         WHERE d.user_id = @UserId AND m.time > now() - interval '3 hours'
-        GROUP BY m.db_id, d.name, time
+        GROUP BY m.db_id, d.name, date_trunc('minute', m.time)
         ORDER BY time ASC";
 
     var data = await conn.QueryAsync(sql, new { UserId = googleId });
