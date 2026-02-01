@@ -62,17 +62,21 @@ var app = builder.Build();
 
 // --- 2. MIDDLEWARE ---
 
-// MUST BE FIRST: Tells .NET to trust Caddy's HTTPS headers
+// --- 2. MIDDLEWARE ---
+
+// 1. MUST BE FIRST: Fixes the HTTPS scheme from Caddy
 app.UseForwardedHeaders();
 
-app.UseAuthentication();
-app.UseAuthorization();
-
+// 2. MUST BE SECOND: Add CORS headers to EVERY request (even unauthenticated ones)
 app.UseCors(policy => policy
     .WithOrigins(Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:5173")
     .AllowAnyMethod()
     .AllowAnyHeader()
     .AllowCredentials());
+
+// 3. Now check if the user is logged in
+app.UseAuthentication();
+app.UseAuthorization();
 
 // Database Connection String
 string connString = Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING") ?? "";
