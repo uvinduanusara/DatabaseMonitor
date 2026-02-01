@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  # The Database - Everything depends on this
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: postgres-db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-saas_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-SaaS_Password_99}
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # The Cache - For your Redis session/caching logic
+  redis-cache:
+    image: redis:7-alpine
+    container_name: redis-cache
+    restart: always
+
+  # The API - Your C# Backend
+  api:
+    build:
+      context: .
+      dockerfile: Monitor.Api/Dockerfile
+    image: monitor-api
+    container_name: monitor-api
+    ports:
+      - "5005:8080"
+    environment:
+      - DATABASE_CONNECTION_STRING=Host=postgres-db;Port=5432;Database=postgres;Username=${POSTGRES_USER:-saas_admin};Password=${POSTGRES_PASSWORD:-SaaS_Password_99}
+      - REDIS_CONNECTION=redis-cache:6379
+    depends_on:
+      - postgres-db
+      - redis-cache
+    restart: always
+
+  # The Worker - The background service
+  worker:
+    build:
+      context: .
+      dockerfile: Monitor.Worker/Dockerfile
+    image: monitor-worker
+    container_name: monitor-worker
+    environment:
+      - DATABASE_CONNECTION_STRING=Host=postgres-db;Port=5432;Database=postgres;Username=${POSTGRES_USER:-saas_admin};Password=${POSTGRES_PASSWORD:-SaaS_Password_99}
+    depends_on:
+      - postgres-db
+    restart: always
+
+volumes:
+  postgres_data:
