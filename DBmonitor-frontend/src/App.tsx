@@ -44,7 +44,12 @@ export default function App() {
 
   // Show routes based on auth state
   return (
-    <Routes>
+    <div className="min-h-screen bg-[#0B0E11] relative overflow-hidden">
+      {/* Global Aurora Background Effects */}
+      <div className="aurora-bg fixed inset-0" />
+      <div className="aurora-emerald fixed inset-0" />
+      
+      <Routes>
       <Route 
         path="/" 
         element={
@@ -71,5 +76,6 @@ export default function App() {
       />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </div>
   );
 }

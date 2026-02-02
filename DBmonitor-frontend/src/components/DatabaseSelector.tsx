@@ -21,13 +21,13 @@ export function DatabaseSelector() {
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 w-full md:w-[250px]">
       <DatabaseIcon size={18} className="text-slate-400" />
       <Select
         value={selectedId ? selectedId.toString() : "all"}
         onValueChange={handleSelect}
       >
-        <SelectTrigger className="w-[250px] bg-slate-800 border-slate-700 text-white">
+        <SelectTrigger className="w-full md:w-[250px] bg-slate-800 border-slate-700 text-white">
           <SelectValue placeholder="Select a database..." />
         </SelectTrigger>
         <SelectContent className="bg-slate-900 border-slate-700 text-white">

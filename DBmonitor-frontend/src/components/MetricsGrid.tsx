@@ -43,24 +43,24 @@ export function MetricsGrid() {
           title="Avg CPU Usage"
           value={`${avgCpu}%`}
           icon={<Cpu size={16} />}
-          color="text-blue-500"
+          color="text-emerald-500"
         />
         <MetricCard
           title="Active Connections"
           value={metrics.length.toString()}
           icon={<Activity size={16} />}
-          color="text-green-500"
+          color="text-emerald-500"
         />
         <MetricCard
           title="System Health"
           value="Optimal"
           icon={<HardDrive size={16} />}
-          color="text-yellow-500"
+          color="text-emerald-500"
         />
       </div>
 
       {/* Real-time Line Chart */}
-      <Card className="bg-slate-900/40 border-slate-800">
+      <Card className="bg-[rgba(16,185,129,0.05)] backdrop-blur-sm border-[rgba(16,185,129,0.1)] hover:border-[rgba(16,185,129,0.2)] transition-all duration-300 hover:shadow-[0_0_30px_rgba(16,185,129,0.2)]">
         <CardHeader>
           <CardTitle className="text-md font-medium text-slate-300">
             Live Performance (CPU %)
@@ -72,7 +72,7 @@ export function MetricsGrid() {
               <LineChart data={metrics}>
                 <CartesianGrid
                   strokeDasharray="3 3"
-                  stroke="#1e293b"
+                  stroke="rgba(16,185,129,0.1)"
                   vertical={false}
                 />
                 <XAxis
@@ -89,20 +89,28 @@ export function MetricsGrid() {
                 <YAxis stroke="#64748b" fontSize={12} domain={[0, 100]} />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "#0f172a",
-                    border: "1px solid #1e293b",
+                    backgroundColor: "rgba(11,14,17,0.9)",
+                    backdropFilter: "blur(12px)",
+                    border: "1px solid rgba(16,185,129,0.2)",
                     color: "#fff",
+                    borderRadius: "8px",
                   }}
-                  itemStyle={{ color: "#3b82f6" }}
+                  itemStyle={{ color: "#10B981" }}
                 />
                 <Line
                   type="monotone"
                   dataKey="cpu"
-                  stroke="#3b82f6"
+                  stroke="url(#emeraldGradient)"
                   strokeWidth={2}
                   dot={false}
                   isAnimationActive={true}
                 />
+                <defs>
+                  <linearGradient id="emeraldGradient" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#10B981" />
+                    <stop offset="100%" stopColor="#34d399" />
+                  </linearGradient>
+                </defs>
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -122,15 +130,15 @@ interface MetricCardProps {
 
 function MetricCard({ title, value, icon, color }: MetricCardProps) {
   return (
-    <Card className="bg-slate-900/40 border-slate-800">
+    <Card className="bg-[rgba(16,185,129,0.05)] backdrop-blur-sm border-[rgba(16,185,129,0.1)] hover:border-[rgba(16,185,129,0.2)] transition-all duration-300 hover:shadow-[0_0_20px_rgba(16,185,129,0.15)] group">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-xs font-medium text-slate-400 uppercase tracking-wider">
           {title}
         </CardTitle>
-        <span className={color}>{icon}</span>
+        <span className={`${color} transition-all duration-300 group-hover:scale-110`}>{icon}</span>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold text-white">{value}</div>
+        <div className="text-2xl font-bold text-white group-hover:text-emerald-400 transition-colors duration-300">{value}</div>
       </CardContent>
     </Card>
   );
