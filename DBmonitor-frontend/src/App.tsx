@@ -7,6 +7,7 @@ import { fetchMetrics } from "./store/metricsSlice";
 import { Login } from "./pages/Login";
 import { Dashboard } from "./pages/Dashboard";
 import { Databases } from "./pages/Databases";
+import LandingPage from "./pages/LandingPage";
 
 export default function App() {
   const dispatch = useAppDispatch();
@@ -41,16 +42,33 @@ export default function App() {
     );
   }
 
-  // If not authenticated, show login page
-  if (status === "failed" || !user) {
-    return <Login />;
-  }
-
-  // If authenticated, show dashboard
+  // Show routes based on auth state
   return (
     <Routes>
-      <Route path="/" element={<Dashboard />} />
-      <Route path="/databases" element={<Databases />} />
+      <Route 
+        path="/" 
+        element={
+          status === "succeeded" && user ? <Navigate to="/dashboard" replace /> : <LandingPage />
+        } 
+      />
+      <Route 
+        path="/dashboard" 
+        element={
+          status === "succeeded" && user ? <Dashboard /> : <Navigate to="/" replace />
+        } 
+      />
+      <Route 
+        path="/databases" 
+        element={
+          status === "succeeded" && user ? <Databases /> : <Navigate to="/" replace />
+        } 
+      />
+      <Route 
+        path="/login" 
+        element={
+          status === "succeeded" && user ? <Navigate to="/dashboard" replace /> : <Login />
+        } 
+      />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
