@@ -36,11 +36,11 @@ services:
     depends_on:
       - api
 
-  # The API (Backend) - Updated paths for Clean Architecture
+  # The API (Backend)
   api:
     build:
       context: .
-      dockerfile: src/Monitor.Api/Dockerfile
+      dockerfile: src/Monitor.Api/Dockerfile # FIXED: Changed API to Api
     image: monitor-api
     container_name: monitor-api
     ports:
@@ -51,13 +51,13 @@ services:
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - FRONTEND_URL=${FRONTEND_URL}
-      - GEMINI_API_KEY=${GEMINI_API_KEY} # Added for your AI features
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
     depends_on:
       - postgres-db
       - redis-cache
     restart: always
 
-  # The Worker (Background Service) - Updated paths
+  # The Worker (Background Service)
   worker:
     build:
       context: .
@@ -66,7 +66,7 @@ services:
     container_name: monitor-worker
     environment:
       - DATABASE_CONNECTION_STRING=Host=postgres-db;Port=5432;Database=postgres;Username=${POSTGRES_USER:-saas_admin};Password=${POSTGRES_PASSWORD:-SaaS_Password_99}
-      - GEMINI_API_KEY=${GEMINI_API_KEY} # Shared AI key
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
     depends_on:
       - postgres-db
     restart: always
