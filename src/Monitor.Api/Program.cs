@@ -17,11 +17,14 @@ Env.Load();
 var builder = WebApplication.CreateBuilder(args);
 
 // --- 1. SERVICES CONFIGURATION ---
+// In Program.cs
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    options.KnownIPNetworks.Clear();
+    // .NET 10 is stricter; instead of KnownIPNetworks, 
+    // it often prefers clearing KnownProxies if you are using Docker/Caddy internally
     options.KnownProxies.Clear();
+    options.KnownNetworks.Clear();
 });
 
 builder.Services.AddStackExchangeRedisCache(options =>
@@ -43,8 +46,8 @@ builder.Services.AddAuthentication(options =>
 {
     options.Cookie.Name = "SaaS_Auth";
     options.Cookie.Path = "/";
-    options.Cookie.SameSite = SameSiteMode.None; 
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always; 
+    options.Cookie.SameSite = SameSiteMode.None;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.Events.OnRedirectToLogin = context =>
     {
         context.Response.StatusCode = StatusCodes.Status401Unauthorized;
@@ -124,11 +127,11 @@ app.MapGet("/api/auth/callback", async (HttpContext context, IUserRepository use
     var name = result.Principal.Identity?.Name;
     var picture = result.Principal.FindFirstValue("picture");
 
-    var user = new User 
-    { 
-        Email = email, 
-        GoogleId = googleId, 
-        Name = name, 
+    var user = new User
+    {
+        Email = email,
+        GoogleId = googleId,
+        Name = name,
         Picture = picture,
         TenantId = null // Default/Null for now
     };
