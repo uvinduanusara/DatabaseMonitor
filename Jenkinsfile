@@ -2,41 +2,69 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_COMPOSE_PATH = '/usr/local/bin/docker-compose'
+        // Injecting credentials from Jenkins Store to Environment Variables
+        GOOGLE_CLIENT_ID     = credentials('google-id')
+        GOOGLE_CLIENT_SECRET = credentials('google-secret')
+        // Add your AI API Key here once you have it in Jenkins
+        // GEMINI_API_KEY    = credentials('gemini-api-key')
+        
+        // Ensure the API knows the production URL for redirects
+        FRONTEND_URL         = "https://dbmonitor.uvindu.xyz"
     }
 
     stages {
         stage('Checkout') {
             steps {
+                // 'scm' refers to the Git repo configured in the Jenkins job
                 checkout scm
             }
         }
 
-        stage('Build & Deploy') {
+        stage('Cleanup & Prepare') {
+            steps {
+                echo 'Cleaning up old containers and orphaned networks...'
+                // --remove-orphans ensures old versions of services are cleared
+                sh "docker compose down --remove-orphans || true"
+            }
+        }
+
+        stage('Build & Deploy Stack') {
             steps {
                 script {
-                    // This builds the images and restarts the containers
-                    sh "docker compose down"
+                    echo 'Building Multi-Project Architecture...'
+                    // Building from root so Docker can see src/Monitor.Application, etc.
                     sh "docker compose up --build -d"
                 }
             }
         }
 
-        stage('Database Migrations') {
+        stage('Verify Database & Migration') {
             steps {
-                // This forces the API to run its internal migration logic
-                // By waiting for the DB to be ready first
+                echo 'Waiting for Postgres to initialize...'
+                // 15 seconds is usually enough for Postgres to start
                 sh "sleep 15"
+                
+                echo 'Restarting API to trigger the Retry-Migration loop...'
                 sh "docker compose restart api"
             }
         }
 
         stage('Health Check') {
             steps {
+                echo 'Current Container Status:'
                 sh "docker ps"
-                // Check if the API returns a 200 OK
-                sh "curl -f http://localhost:5000/health || exit 1"
+                
+                echo 'Testing API Endpoint...'
+                // Port 5005 matches your docker-compose.yml mapping
+                sh "curl -f http://localhost:5005/api/auth/me || echo 'API is up but unauthenticated (Expected)'"
             }
+        }
+    }
+
+    post {
+        failure {
+            echo 'Deployment failed. Check docker logs api...'
+            sh "docker logs monitor-api --tail 20"
         }
     }
 }

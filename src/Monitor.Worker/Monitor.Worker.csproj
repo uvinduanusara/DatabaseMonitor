@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Worker">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>dotnet-Monitor.Worker-fafc1bc9-6467-479c-95d2-717be46990df</UserSecretsId>
@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Dapper" Version="2.1.66" />
+    <PackageReference Include="DotNetEnv" Version="3.1.1" />
     <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.2" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.2" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.2" />
@@ -16,5 +17,11 @@
     <PackageReference Include="MongoDB.Driver" Version="3.6.0" />
     <PackageReference Include="Npgsql" Version="10.0.1" />
     <PackageReference Include="StackExchange.Redis" Version="2.10.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Monitor.Domain\Monitor.Domain.csproj" />
+    <ProjectReference Include="..\Monitor.Application\Monitor.Application.csproj" />
+    <ProjectReference Include="..\Monitor.Infrastructure\Monitor.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

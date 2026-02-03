@@ -15,4 +15,10 @@
     <PackageReference Include="Npgsql" Version="10.0.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Monitor.Application\Monitor.Application.csproj" />
+    <ProjectReference Include="..\Monitor.Infrastructure\Monitor.Infrastructure.csproj" />
+    <ProjectReference Include="..\Monitor.Domain\Monitor.Domain.csproj" />
+  </ItemGroup>
+
 </Project>
