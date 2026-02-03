@@ -39,8 +39,8 @@ services:
   # The API (Backend) - Updated paths for Clean Architecture
   api:
     build:
-      context: . 
-      dockerfile: src/Monitor.API/Dockerfile
+      context: .
+      dockerfile: src/Monitor.Api/Dockerfile
     image: monitor-api
     container_name: monitor-api
     ports:
